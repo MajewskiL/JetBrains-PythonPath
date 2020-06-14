@@ -1,0 +1,92 @@
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Date
+from datetime import datetime, timedelta
+from sqlalchemy.orm import sessionmaker
+
+week = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
+engine = create_engine('sqlite:///todo.db?check_same_thread=False')
+Baza = declarative_base()
+
+def drukuj(dane, key=0):
+    if len(dane) == 0:
+        print("Nothing to do!")
+    else:
+        for y, x in enumerate(dane):
+            print(f"{y + 1}. {x.task}", end="")
+            if key == 1:
+                print(f", {x.deadline.day} {x.deadline.strftime('%b')}")
+    print("\n")
+    pass
+
+class Table(Baza):
+    __tablename__ = 'task'
+    id = Column(Integer, primary_key=True)
+    task = Column(String)
+    deadline = Column(Date, default=datetime.today())
+
+    def __repr__(self):
+        return self.task
+
+Baza.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+sesja = Session()
+
+
+while True:
+    n = input("1) Today's tasks\n"
+              "2) Week's tasks\n"
+              "3) All tasks\n"
+              "4) Missed tasks\n"
+              "5) Add task\n"
+              "6) Delete task\n"              
+              "0) Exit\n"
+              )
+    dzis = datetime.today().date()
+    if n == "0":
+        break
+    elif not n:
+        continue
+    elif n in "46":
+        print("Missed tasks:" if n == "4" else "Chose the number of the task you want to delete:")
+        dane = sesja.query(Table).filter(Table.deadline < dzis).order_by(Table.deadline).all()
+        if len(dane) == 0:
+            if n == "4":
+                print("Nothing is missed!")
+            else:
+                print("Nothing to delete")
+            continue
+        drukuj(dane, 1)
+        if n == "6":
+            out = input()
+            for z, x in enumerate(dane):
+                if z == int(out) - 1:
+                    sesja.delete(x)
+                    sesja.commit()
+    elif n in "123":
+        if n == "1":
+            dane = sesja.query(Table).filter(Table.deadline == dzis).all()
+            print(f"Today {dzis.day} {dzis.strftime('%b')}:")
+            drukuj(dane)
+        elif n == "2":
+            for z in range(7):
+                dzis = datetime.today().date() + timedelta(days=z)
+                dane = sesja.query(Table).filter(Table.deadline == dzis).all()
+                print(f"{week[dzis.weekday()]} {dzis.day} {dzis.strftime('%b')}:")
+                drukuj(dane)
+        else:
+            print("All tasks:")
+            dane = sesja.query(Table).all()
+            drukuj(dane)
+    elif n == "5":
+        try:
+            co = input("\nEnter task\n")
+            kiedy = input("Enter deadline\n")
+            linia = Table(task=co, deadline=datetime.strptime(kiedy, '%Y-%m-%d'))
+            sesja.add(linia)
+            sesja.commit()
+            print("The task has been added!\n")
+        except ValueError:
+            print("Bad dane")
+
+print("Bye!")
