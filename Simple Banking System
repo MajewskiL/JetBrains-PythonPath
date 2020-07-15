@@ -1,0 +1,120 @@
+#https://hyperskill.org/projects/109
+
+import random
+import sqlite3
+
+menu_1 = "\n1. Create an account\n2. Log into account\n"
+menu_2 = "\n1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n"
+menu_e = "0. Exit"
+state = ""
+
+
+class Account:
+    def __init__(self):
+        global client
+        random.seed()
+        self.number = int(luhn("400000" + "0" * (9 - int(len(str(client)))) + str(client)))
+        self.pin = "".join([str(x) for x in random.sample(range(10), 4)])
+        client += 1
+
+
+def luhn(number):
+    sufix = [int(number[y]) * 2 if y % 2 == 0 else int(number[y]) for y in range(len(number))]
+    sufix = (sum([int(x) - 9 if int(x) > 9 else int(x) for x in sufix]) % 10)
+    sufix = sufix if sufix == 0 else 10 - sufix
+    return number + str(sufix)
+
+
+conn = sqlite3.connect('card.s3db')
+karty = conn.cursor()
+
+# karty.execute("DROP TABLE card")
+# karty.execute("CREATE TABLE card(id INTEGER PRIMARY KEY AUTOINCREMENT, number TEXT NOT NULL, pin TEXT NOT NULL, balance INTEGER NOT NULL DEFAULT 0);")
+
+karty.execute("CREATE TABLE IF NOT EXISTS card(id INTEGER, number TEXT, pin TEXT, balance INTEGER DEFAULT 0);")
+conn.commit()
+
+karty.execute("SELECT MAX(id) FROM card")
+stan = karty.fetchone()[0]
+client = stan + 1 if stan else 0
+
+while state != "0":
+    print(menu_1 + menu_e)
+    state = input()
+    if state == "1":
+        konto = Account()
+        print("Your card has been created\nYour card number:")
+        print(f"{konto.number}")
+        print("Your card PIN:")
+        print(f"{konto.pin}\n")
+        karty.execute(f"INSERT INTO card (id, number, pin) VALUES ({client}, {konto.number}, {konto.pin});")
+        conn.commit()
+    elif state == "2":
+        log_c = int(input("Enter your card number:"))
+        log_p = input("Enter your PIN:")
+        try:
+            karty.execute(f"SELECT * FROM card WHERE number={log_c}")
+            row = karty.fetchone()
+            if row:
+                customer = dict(zip([c[0] for c in karty.description], row))
+
+                if customer["pin"] == log_p:
+                    print("You have successfully logged in!\n")
+                    state2 = ""
+                    while state2 != "0":
+                        karty.execute(f"SELECT * FROM card WHERE number={log_c}")
+                        row = karty.fetchone()
+                        customer = dict(zip([c[0] for c in karty.description], row))
+                        print(menu_2 + menu_e)
+                        state2 = input()
+                        if state2 == "1":
+                            print(f"Balance: {customer['balance']}")
+                        elif state2 == "2":
+                            karty.execute(f"UPDATE card "
+                                          f"SET balance = {customer['balance'] + int(input('Enter income:'))} "
+                                          f"WHERE id = {customer['id']}")
+                            conn.commit()
+                        elif state2 == "3":
+                            print("Transfer\nEnter card number:")
+                            dest_card = input()
+
+                            karty.execute(f"SELECT * FROM card WHERE number={dest_card}")
+                            row = karty.fetchone()
+                            if row:
+                                customer2 = dict(zip([c[0] for c in karty.description], row))
+                                transfer = int(input("Enter how much money you want to transfer: "))
+                                if customer["balance"] < transfer:
+                                    print("Not enough money!")
+                                else:
+                                    karty.execute(f"UPDATE card "
+                                                f"SET balance = {customer2['balance'] + transfer} "
+                                                f"WHERE number = {customer2['number']}")
+                                    conn.commit()
+                                    karty.execute(f"UPDATE card "
+                                                f"SET balance = {customer['balance'] - transfer} "
+                                                f"WHERE number = {customer['number']}")
+                                    conn.commit()
+                                    print("Success!")
+                            else:
+                                if dest_card != luhn(dest_card[:-1]):
+                                    print("Probably you made mistake in the card number. Please try again!")
+                                else:
+                                    print("Such a card does not exist.")
+                        elif state2 == "4":
+                            karty.execute(f"DELETE FROM card WHERE number={log_c}")
+                            conn.commit()
+                            state2 = "0"
+                        elif state2 == "5":
+                            state2 = "0"
+                        elif state2 == "0":
+                            state = "0"
+                else:
+                    raise KeyError
+            else:
+                raise KeyError
+        except KeyError:
+            print("Wrong card number or PIN!\n")
+
+
+conn.close()
+print("Bye!")
