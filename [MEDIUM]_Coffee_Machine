@@ -1,0 +1,93 @@
+# https://hyperskill.org/projects/68
+
+state = ""
+menu = "Write action (buy, fill, take, remaining, exit): "
+
+
+class Maszin():
+    coffe = {}
+    coffe["1"] = {"name": "espressp", "$" : 4, "water": 250, "milk": 0, "self.coffee beans": 16}
+    coffe["2"] = {"name": "latte", "$" : 7, "water": 350, "milk": 75, "self.coffee beans": 20}
+    coffe["3"] = {"name": "cappuccino", "$" : 6, "water": 200, "milk": 100, "self.coffee beans": 12}
+
+    mach_s = "menu"
+    buy_s = 0
+
+    def __init__(self):
+        self.cash = 550
+        self.water = 400
+        self.milk = 540
+        self.coffee_beans = 120
+        self.cups = 9
+
+    def show(self):
+        print("\nThe self.coffee machine has:")
+        print(f"{self.water} of water")
+        print(f"{self.milk} of milk")
+        print(f"{self.coffee_beans} of self.coffee beans")
+        print(f"{self.cups} of disposable cups")
+        print(f"${self.cash} of money\n")
+
+    def komand(self, inst):
+        if self.mach_s == "menu":
+            if inst == "remaining":
+                self.show()
+                print(menu)
+            elif inst == "take":
+                print(f"\nI gave you ${self.cash}\n")
+                self.cash = 0
+                print(menu)
+            elif inst == "fill" or inst == "buy":
+                self.mach_s = inst
+        if self.mach_s == "fill":
+            if inst.isdigit():
+                ile = int(inst)
+            if self.buy_s == 0:
+                print("Write how many ml of water do you want to add: ")
+                self.buy_s += 1
+            elif self.buy_s == 1:
+                self.water += ile
+                print("Write how many ml of milk do you want to add: ")
+                self.buy_s += 1
+            elif self.buy_s == 2:
+                self.milk += ile
+                print("Write how many grams of self.coffee beans do you want to add: ")
+                self.buy_s += 1
+            elif self.buy_s == 3:
+                self.coffee_beans += ile
+                print("Write how many disposable cups of self.coffee do you want to add: ")
+                self.buy_s += 1
+            elif self.buy_s == 4:
+                self.cups += ile
+                self.buy_s = 0
+                self.mach_s = "menu"
+                print(menu)
+        elif self.mach_s == "buy":
+            if inst == "back":
+                self.mach_s = "menu"
+                print(menu)
+            elif inst == "buy":
+                print("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu: ")
+            else:
+                if any([self.water - self.coffe[inst]["water"] < 0,
+                        self.cups == 0,
+                        self.milk - self.coffe[inst]["milk"] < 0,
+                        self.coffee_beans - self.coffe[inst]["self.coffee beans"] < 0]):
+                    print("Sorry, not enough water!")
+                else:
+                    self.water -= self.coffe[inst]["water"]
+                    self.cups -= 1
+                    self.milk -= self.coffe[inst]["milk"]
+                    self.coffee_beans -= self.coffe[inst]["self.coffee beans"]
+                    self.cash += self.coffe[inst]["$"]
+                    print("I have enough resources, making you a self.coffee!")
+                self.mach_s = "menu"
+                print(menu)
+                return
+
+
+automat = Maszin()
+print(menu)
+while state != "exit":
+    automat.komand(state)
+    state = input()
