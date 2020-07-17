@@ -1,0 +1,42 @@
+#https://hyperskill.org/projects/78
+
+import random
+rating = 0
+
+name = input("Enter your name: ")
+print(f"Hello, {name}")
+plik = open("rating.txt", "r")
+names = [x.split(" ") for x in plik.read().split("\n")]
+for x in names:
+    if x[0] == name:
+        rating = int(x[1])
+plik.close()
+elements = input().split(",")
+if elements == ['']:
+    elements = ["rock", "paper", "scissors"]
+print("Okay, let's start")
+
+while True:
+    player = input()
+    if player == "!exit":
+        break
+    elif player == "!rating":
+        print(f"Your rating: {rating}")
+    else:
+        if player in elements:
+            ile = int((len(elements) - 1) / 2)
+            gdzie = elements.index(player)
+            wins = [elements[x % len(elements)] for x in range(gdzie + 1, gdzie + ile + 1)]
+            random.seed()
+            computer = random.choice(elements)
+            if computer == player:
+                print(f"There is a draw ({computer})")
+                rating += 50
+            elif computer in wins:
+                print(f"Sorry, but computer chose {computer}")
+            else:
+                print(f" Well done. Computer chose {computer} and failed")
+                rating += 100
+        else:
+            print("Invalid input")
+print("Bye!")
