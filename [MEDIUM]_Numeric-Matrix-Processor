@@ -1,0 +1,82 @@
+#https://hyperskill.org/projects/96
+
+def show(wynik):
+    print("The result is:")
+    for x in wynik:
+        print(" ".join([str(y) for y in x]))
+
+
+def det(mtx):
+    wynik = 0
+    if len(mtx) == 2:
+        return mtx[0][0] * mtx[1][1] - mtx[0][1] * mtx[1][0]
+    for x in range(0, len(mtx)):
+        bck = mtx[1:].copy()
+        bck = list([bck[y][z] for z in range(len(mtx)) if z != x] for y in range(0, len(mtx) - 1))
+        wynik = wynik + pow((-1), x) * mtx[0][x] * det(bck)
+    return wynik
+
+
+def det_m(mtx):
+    mtx_b = [x[:] for x in mtx]
+    for x in range(len(mtx)):
+        for y in range(len(mtx)):
+            bck = list([mtx[z] for z in range(len(mtx)) if z != x])
+            bck = list([bck[z][i] for i in range(len(mtx)) if i != y] for z in range(0, len(mtx) - 1))
+            mtx_b[x][y] = pow((-1), y + x) * det(bck)
+    return mtx_b
+
+
+menu = "1. Add matrices\n2. Multiply matrix by a constant\n3. Multiply matrices\n4. Transpose matrix\n" \
+       "5. Calculate a determinant\n6. Inverse matrix\n0. Exit\n"
+trans = "1. Main diagonal\n2. Side diagonal\n3. Vertical line\n4. Horizontal line\n"
+state, state2 = "", ""
+wyn = 0
+
+while True:
+    print(menu)
+    state = input("Your choice: ")
+    if state == "0":
+        break
+    elif state == "4":
+        state2 = input(trans)
+    mat_1 = [int(x) for x in input("Enter size of first matrix: ").split(" ")]
+    print("Enter matrix: ")
+    arr_1 = list([float(x) for x in input().split(" ")] for y in range(mat_1[0]))
+    if state == "2":
+        multi = float(input("Enter constant: "))
+        show(list([str(i * multi) for i in arr_1[x]] for x in range(mat_1[0])))
+    elif state in ("1", "3"):
+        mat_2 = [int(x) for x in input("Enter size of second matrix: ").split(" ")]
+        print("Enter matrix: ")
+        arr_2 = list([float(x) for x in input().split(" ")] for y in range(mat_2[0]))
+        if all([mat_1 == mat_2, state == "1"]):
+            wyn = list([i + j for i, j in zip(arr_1[x], arr_2[x])] for x in range(mat_1[0]))
+            show(wyn)
+        elif all([mat_1[1] == mat_2[0], state == "3"]):
+            arr_2 = list([arr_2[x][y] for x in range(mat_2[0])] for y in range(mat_2[1]))
+            show(list(list(sum(x[z] * y[z] for z in range(len(x))) for y in arr_2) for x in arr_1))
+        else:
+            print("The operation cannot be performed.")
+    elif state == "4":
+        if state2 == "1":
+            show(list([arr_1[x][y] for x in range(mat_1[0])] for y in range(mat_1[1])))
+        elif state2 == "2":
+            arr_1 = list(x[::-1] for x in arr_1)
+            arr_1 = list([arr_1[x][y] for x in range(mat_1[0])] for y in range(mat_1[1]))
+            show(list(x[::-1] for x in arr_1))
+        elif state2 == "3":
+            show(list(x[::-1] for x in arr_1))
+        elif state2 == "4":
+            show(arr_1[::-1])
+    elif state == "5":
+        print(f"The result is: \n{arr_1[0][0]}" if len(arr_1) == 1 else f"The result is: \n{(det(arr_1))}")
+    elif state == "6":
+        determinant = det(arr_1)
+        if determinant != 0:
+            determinant = 1 / determinant
+            arr_1 = det_m(arr_1)
+            arr_1 = list([arr_1[x][y] for x in range(len(arr_1))] for y in range(len(arr_1)))
+            show(list([str(i * determinant) for i in arr_1[x]] for x in range(mat_1[0])))
+        else:
+            print("This matrix doesn't have an inverse.")
