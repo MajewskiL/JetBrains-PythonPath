@@ -1,0 +1,30 @@
+# https://hyperskill.org/projects/69
+import random
+random.seed()
+que = random.choice(('python', 'java', 'kotlin', 'javascript'))
+ans, all_ans, menu = "-" * len(que), "", ""
+print("H A N G M A N")
+while menu != "exit":
+    menu = input('Type "play" to play the game, "exit" to quit: ')
+    if menu == "play":
+        turn = 8
+        while turn > 0:
+            print("\n" + ans)
+            if "-" not in ans:
+                break
+            odp = input("Input a letter: ")
+            if len(odp) != 1:
+                print("You should input a single letter")
+            elif not odp.islower():
+                print("It is not an ASCII lowercase letter")
+            else:
+                if odp in all_ans:
+                    print("You already typed this letter")
+                else:
+                    all_ans += odp
+                    if odp in que:
+                        ans = "".join([ans[x] if (que[x] != odp) else odp for x in range(len(que))])
+                    else:
+                        print("No such letter in the word")
+                        turn -= 1
+        print("You are hanged!" if turn == 0 else f"You guessed the word {que}!\nYou survived!")
