@@ -1,0 +1,202 @@
+import json
+import re
+import itertools
+
+rozklad_jazdy = '[{"bus_id" : 128, "stop_id" : 1, "stop_name" : "Fifth Avenue", "next_stop" : 4, "stop_type" : "S", "a_time" : "08:12"},' \
+          '{"bus_id" : 128, "stop_id" : 4, "stop_name" : "Abbey Road", "next_stop" : 5, "stop_type" : "", "a_time" : "08:19"}, ' \
+          '{"bus_id" : 128, "stop_id" : 5, "stop_name" : "Santa Monica Boulevard", "next_stop" : 8, "stop_type" : "O", "a_time" : "08:25"}, ' \
+          '{"bus_id" : 128, "stop_id" : 8, "stop_name" : "Elm Street", "next_stop" : 11, "stop_type" : "", "a_time" : "08:37"}, ' \
+          '{"bus_id" : 128, "stop_id" : 11, "stop_name" : "Beale Street", "next_stop" : 12, "stop_type" : "", "a_time" : "09:20"}, ' \
+          '{"bus_id" : 128, "stop_id" : 12, "stop_name" : "Sesame Street", "next_stop" : 14, "stop_type" : "", "a_time" : "09:45"}, ' \
+          '{"bus_id" : 128, "stop_id" : 14, "stop_name" : "Bourbon Street", "next_stop" : 19, "stop_type" : "O", "a_time" : "09:59"}, ' \
+          '{"bus_id" : 128, "stop_id" : 19, "stop_name" : "Prospekt Avenue", "next_stop" : 0, "stop_type" : "F", "a_time" : "10:12"}, ' \
+          '{"bus_id" : 256, "stop_id" : 2, "stop_name" : "Pilotow Street", "next_stop" : 3, "stop_type" : "S", "a_time" : "08:13"}, ' \
+          '{"bus_id" : 256, "stop_id" : 3, "stop_name" : "Startowa Street", "next_stop" : 8, "stop_type" : "", "a_time" : "08:16"}, ' \
+          '{"bus_id" : 256, "stop_id" : 8, "stop_name" : "Elm Street", "next_stop" : 10, "stop_type" : "", "a_time" : "08:29"}, ' \
+          '{"bus_id" : 256, "stop_id" : 10, "stop_name" : "Lombard Street", "next_stop" : 12, "stop_type" : "", "a_time" : "08:44"}, ' \
+          '{"bus_id" : 256, "stop_id" : 12, "stop_name" : "Sesame Street", "next_stop" : 13, "stop_type" : "O", "a_time" : "08:46"}, ' \
+          '{"bus_id" : 256, "stop_id" : 13, "stop_name" : "Orchard Road", "next_stop" : 16, "stop_type" : "", "a_time" : "09:13"}, ' \
+          '{"bus_id" : 256, "stop_id" : 16, "stop_name" : "Sunset Boulevard", "next_stop" : 17, "stop_type" : "O", "a_time" : "09:26"}, ' \
+          '{"bus_id" : 256, "stop_id" : 17, "stop_name" : "Khao San Road", "next_stop" : 20, "stop_type" : "O", "a_time" : "10:25"}, ' \
+          '{"bus_id" : 256, "stop_id" : 20, "stop_name" : "Michigan Avenue", "next_stop" : 0, "stop_type" : "F", "a_time" : "11:26"}, ' \
+          '{"bus_id" : 512, "stop_id" : 6, "stop_name" : "Arlington Road", "next_stop" : 7, "stop_type" : "S", "a_time" : "11:06"}, ' \
+          '{"bus_id" : 512, "stop_id" : 7, "stop_name" : "Parizska Street", "next_stop" : 8, "stop_type" : "", "a_time" : "11:15"}, ' \
+          '{"bus_id" : 512, "stop_id" : 8, "stop_name" : "Elm Street", "next_stop" : 9, "stop_type" : "", "a_time" : "11:56"}, ' \
+          '{"bus_id" : 512, "stop_id" : 9, "stop_name" : "Niebajka Avenue", "next_stop" : 15, "stop_type" : "", "a_time" : "12:20"}, ' \
+          '{"bus_id" : 512, "stop_id" : 15, "stop_name" : "Jakis Street", "next_stop" : 16, "stop_type" : "", "a_time" : "12:44"}, ' \
+          '{"bus_id" : 512, "stop_id" : 16, "stop_name" : "Sunset Boulevard", "next_stop" : 18, "stop_type" : "", "a_time" : "13:01"}, ' \
+          '{"bus_id" : 512, "stop_id" : 18, "stop_name" : "Jakas Avenue", "next_stop" : 19, "stop_type" : "", "a_time" : "14:00"}, ' \
+          '{"bus_id" : 1024, "stop_id" : 21, "stop_name" : "Karlikowska Avenue", "next_stop" : 12, "stop_type" : "S", "a_time" : "13:01"}, ' \
+          '{"bus_id" : 1024, "stop_id" : 12, "stop_name" : "Sesame Street", "next_stop" : 0, "stop_type" : "F", "a_time" : "14:00"}, ' \
+          '{"bus_id" : 512, "stop_id" : 19, "stop_name" : "Prospekt Avenue", "next_stop" : 0, "stop_type" : "F", "a_time" : "14:11"}]'
+
+
+def stage_1(json_final):
+    bus_id, stop_id, stop_name, next_stop, stop_type, a_time = 0, 0, 0, 0, 0, 0
+    for x in json_final:
+        if not isinstance(x["bus_id"], int):
+            bus_id += 1
+        if not isinstance(x["stop_id"], int):
+            stop_id += 1
+        if not isinstance(x["stop_name"], str) or x["stop_name"] == "":
+            stop_name += 1
+        if not isinstance(x["next_stop"], int) or x["next_stop"] == "":
+            next_stop += 1
+        if not isinstance(x["stop_type"], str) or len(x["stop_type"]) > 1:
+            stop_type += 1
+        if not isinstance(x["a_time"], str) or x["a_time"] == "":
+            a_time += 1
+    print(f"Type validation: {bus_id + stop_id + stop_name + next_stop + stop_type + a_time} errors")
+    print(f"bus_id: {bus_id}")
+    print(f"stop_id: {stop_id}")
+    print(f"stop_name: {stop_name}")
+    print(f"next_stop: {next_stop}")
+    print(f"stop_type: {stop_type}")
+    print(f"a_time: {a_time}")
+
+
+def stage_2(json_final):
+    stop_name, stop_type, a_time = 0, 0, 0
+    for x in json_final:
+        if not re.match(r'^[A-Z].* Street$|^[A-Z].* Avenue$|^[A-Z].* Boulevard$|^[A-Z].* Road$', x["stop_name"]):
+            stop_name += 1
+        if len(x["stop_type"]) != 0 and not re.match(r'^[SOF]$', x["stop_type"]):
+            stop_type += 1
+        if not re.match(r'^[0-2][0-9]:[0-5][0-9]$', x["a_time"]):
+            a_time += 1
+#    stop_name = 5
+#    a_time = 3
+#    stop_type = 9
+    print(f"Format validation: {stop_name + stop_type + a_time} errors")
+    print(f"stop_name: {stop_name}")
+    print(f"stop_type: {stop_type}")
+    print(f"a_time: {a_time}")
+
+
+def stage_3(json_final):
+    print("Line names and number of stops:")
+    lines = {}
+    for x in json_final:
+        try:
+            lines[x["bus_id"]].append(x)
+        except KeyError:
+            lines[x["bus_id"]] = [x]
+    for x in lines:
+        print(f"bus_id: {x}, stops: {len(lines[x])}")
+    return lines
+
+
+def stacje(slownik):
+    stacje_type = ""
+    stacje_all, stacje_tmp, stacje_p, stacje_k = [], [], [], []
+    names = {}
+
+    for x in slownik:
+        for y in slownik[x]:
+            stacje_type += y["stop_type"]
+            stacje_tmp.append(y["stop_id"])
+            if y["stop_type"] == "S":
+                stacje_p.append(y["stop_id"])
+            elif y["stop_type"] == "F":
+                stacje_k.append(y["stop_id"])
+            names[y["stop_id"]] = y["stop_name"]
+        if stacje_type.count("S") != 1 or stacje_type.count("F") != 1:
+            print(f"There is no start or end stop for the line: {y['bus_id']}.")
+            return False
+        stacje_all.append(set(stacje_tmp))
+        stacje_tmp = []
+        stacje_type = ""
+    stacje_type = []
+
+    for z in itertools.combinations(range(len(stacje_all)), 2):
+        stacje_type.append((stacje_all[z[0]].intersection(stacje_all[z[1]])))
+
+    wynik = set()
+    for z in stacje_type:
+        wynik = wynik | z
+    dane = dict()
+    dane["names"] = names
+    dane["wynik"] = set(wynik)
+    dane["stacje_p"] = set(stacje_p)
+    dane["stacje_k"] = set(stacje_k)
+    return dane
+
+
+def stage_4(slownik):
+
+    data = stacje(slownik)
+    if not data:
+        return
+    names = data["names"]
+    stacje_p = data["stacje_p"]
+    stacje_k = data["stacje_k"]
+    wynik = data["wynik"]
+    stacje_p_n = [names[x] for x in set(stacje_p)]
+    stacje_k_n = [names[x] for x in set(stacje_k)]
+    wynik_n = [names[x] for x in wynik]
+
+    print(f"Start stops: {len(stacje_p_n)} {sorted(stacje_p_n)}")
+    print(f"Transfer stops: {len(wynik_n)} {sorted(wynik_n)}")
+    print(f"Finish stops: {len(stacje_k_n)} {sorted(stacje_k_n)}")
+
+
+def stage_5(slownik):
+    print("Arrival time test:")
+    error = 0
+    for x in slownik:
+        times, start = {}, ""
+        for y in slownik[x]:
+            if y["stop_type"] == "S":
+                start = str(y["stop_id"])
+            times[str(y["stop_id"])] = (str(y["next_stop"]), y["a_time"], y["stop_name"])
+        e, t, n = times[start]
+        while e != "0":
+            if t >= times[e][1]:
+                print(f"bus_id line {x}: wrong time on station {n}")
+                error += 1
+                break
+            e, t, n = times[e]
+    if error == 0:
+        print("OK")
+
+
+def stage_6(slownik):
+    print("On demand stops test:")
+    data = stacje(slownik)
+    if not data:
+        return
+    names = data["names"]
+    stacje_p = data["stacje_p"]
+    stacje_k = data["stacje_k"]
+    wynik = data["wynik"]
+    stacje_all = wynik | stacje_p | stacje_k
+    wrong_station = []
+    for x in slownik:
+        for y in slownik[x]:
+            if y["stop_id"] in stacje_all and y["stop_type"] == "O":
+                wrong_station.append(y["stop_id"])
+    if len(wrong_station) > 0:
+        wrong_station = [names[x] for x in set(wrong_station)]
+        print(f"Wrong stop type: {sorted(set(wrong_station))}")
+    else:
+        print("OK")
+
+
+def test(rozklad):
+    print("----- Test 1 -----")
+    stage_1(rozklad)
+    print("----- Test 2 -----")
+    stage_2(rozklad)
+    print("----- Test 3 -----")
+    wynik = stage_3(rozklad)
+    print("----- Test 4 -----")
+    stage_4(wynik)
+    print("----- Test 5 -----")
+    stage_5(wynik)
+    print("----- Test 6 -----")
+    stage_6(wynik)
+
+rozklad_jazdy = json.loads(rozklad_jazdy)
+print(rozklad_jazdy)
+input()
+test(rozklad_jazdy)
