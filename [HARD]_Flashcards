@@ -1,0 +1,117 @@
+https://hyperskill.org/projects/127
+
+import random
+import json
+import io
+import argparse
+
+def logprint(txt):
+    global log
+    print(txt)
+    print(txt, file=log)
+
+
+def importcard(file_name, cards_i):
+    try:
+        with open(file_name, "r") as json_f:
+            cards_json_i = json.load(json_f)
+        for key, value in cards_json_i.items():
+            cards_i[key] = value
+        logprint(f"{len(cards_json_i)} cards have been loaded.")
+    except FileNotFoundError:
+        logprint("File not found.")
+    return cards_i
+
+
+def exportcard(file_name, cards_e):
+    with open(file_name, "w") as file_e:
+        json.dump(cards_e, file_e)
+    logprint(f"{len(cards_e)} cards have been saved.")
+
+
+log = io.StringIO()
+cards, err, state = {}, {}, ""
+random.seed()
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--import_from')
+parser.add_argument('--export_to')
+args = parser.parse_args()
+if args.import_from:
+    importcard(args.import_from, cards)
+while state != "exit":
+    state = input("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):\n")
+    print("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):", file=log)
+    if state == "add":
+        print("add", file=log)
+        while True:
+            card = input("The card:\n")
+            print(f"The card:\n{card}", file=log)
+            if card in cards.keys():
+                logprint(f'The term "{card}" already exists.')
+            else:
+                break
+        while True:
+            term = input("The definition of the card:\n")
+            print(f"The definition of the card:\n{term}", file=log)
+            if term in cards.values():
+                logprint(f'The definition "{term}" already exists.')
+            else:
+                break
+        cards[card] = term
+        logprint(f'The pair ("{card}":"{term}") has been added.')
+    elif state == "remove":
+        card = input("Which card?\n")
+        print(f"remove\nWhich card?\n{card}", file=log)
+        try:
+            cards.pop(card)
+            logprint("The card has been removed.")
+        except KeyError:
+            logprint(f'Can\'t remove "{card}": there is no such card.')
+    elif state == "ask":
+        for _ in range(int(input("How many times to ask?\n"))):
+            print("ask\nHow many times to ask?", file=log)
+            q = random.choice([x for x in cards.keys()])
+            ans = input(f'Print the definition of "{q}":\n')
+            print(f'Print the definition of "{q}":\n{ans}', file=log)
+            if ans == cards[q]:
+                logprint("Correct!")
+            else:
+                try:
+                    err[q] += 1
+                except KeyError:
+                    err[q] = 1
+                if ans in cards.values():
+                    logprint(f'Wrong. The right answer is "{cards[q]}", but your definition is correct for "{list(cards.keys())[list(cards.values()).index(ans)]}".')
+                else:
+                    logprint(f'Wrong. The right answer is "{cards[q]}".')
+    elif state == "export":
+        file = input("File name:\n")
+        print(f"export\nFile name:\n{file}", file=log)
+        exportcard(file, cards)
+    elif state == "import":
+        file = input("File name:\n")
+        print(f"import\nFile name:\n{file}", file=log)
+        cards = importcard(file, cards)
+    elif state == "log":
+        file = input("File name:\n")
+        print(f"log\nFile name:\n{file}", file=log)
+        with open(file, "w") as f:
+            print(log.getvalue(), file=f)
+        logprint("The log has been saved.")
+    elif state == "hardest card":
+        print("hardest card", file=log)
+        if len(err) == 0:
+            logprint("There are no cards with errors.")
+        else:
+            m = max(err.values())
+            hard = ['"' + z + '"' for z in err if err[z] == m]
+            print(f'The hardest {"cards are" if len(hard) > 1 else "card is"} {", ".join(hard)}. You have {m} errors answering {"them" if len(hard) > 1 else "it"}.')
+            print(f'The hardest {"cards are" if len(hard) > 1 else "card is"} {", ".join(hard)}. You have {m} errors answering {"them" if len(hard) > 1 else "it"}.', file=log)
+    elif state == "reset stats":
+        err = {}
+        logprint("Card statistics has been reset.")
+logprint("Bye bye!")
+if args.export_to:
+    exportcard(args.export_to, cards)
+log.close()
