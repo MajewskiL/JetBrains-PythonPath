@@ -1,0 +1,39 @@
+#https://hyperskill.org/projects/114/stages/619/implement
+
+def regex(r, s):
+    if r == "":
+        return True
+    if r == "$":
+        return True if s == "" else False
+    elif s == "":
+        return True if r[-1] in "+*?" else False
+    try:
+        if r[0] == "\\":
+            return regex(r[1:], s)
+    except IndexError:
+        pass
+    try:
+        if r[1] in "?+*":
+            if r[1] == "?":
+                return regex(r[2:], s[1:]) if r[0] == s[0] or r[0] == "." else regex(r[2:], s)
+            elif r[1] == "*":
+                 return regex(r[2:], s) if r[0] != s[0] and r[0] != "." else regex(r, s[1:])
+            else:
+                return False if r[0] != s[0] and r[0] != "." else regex(s[0] + "*" + r[2:], s[1:])
+    except IndexError:
+        pass
+    return regex(r[1:], s[1:]) if r[0] == s[0] or r[0] == "." else False
+
+def regex_iter(r, s):
+    if r == "":
+        return True
+    if s == "":
+        return False
+    if r[0] == "^":
+        ans = regex(r[1:], s)
+    else:
+        ans = regex(r,s)
+    return True if ans else regex_iter(r, s[1:]) if r[0] != "^" else False
+
+r, s = input().split("|")
+print(regex_iter(r, s))
