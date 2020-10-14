@@ -1,0 +1,67 @@
+# https://hyperskill.org/projects/112
+
+import sys
+import os
+import re
+
+info = ("S001 Too long",
+        "S002 Indentation is not a multiple of four",
+        "S003 Unnecessary semicolon after a statement",
+        "S004 At least two spaces before inline comments required",
+        "S005 TODO found",
+        "S006 More than two blank lines used before this line",
+        "S007 Too many spaces after construction_name",
+        "S008 Class name class_name should use CamelCase",
+        "S009 Function name function_name should use snake_case",
+        "S010 Argument name arg_name should be snake_case",
+        "S011 Variable var_name should be snake_case",
+        "S012 Default argument value is mutable")
+
+files = []
+if sys.argv[1].endswith(".py"):
+    files.append(sys.argv[1])
+else:
+    with os.scandir(sys.argv[1]) as items:
+        for item in items:
+            if item.is_file() and item.name.endswith(".py"):
+                files.append(sys.argv[1] + "\\" + item.name)
+
+for z in files:
+    with open(z, 'r') as file:
+        data = file.read()
+    empty = 0
+    for i, x in enumerate(data.split("\n")):
+
+        if len(x) > 79:
+            print(f"{z}: Line {i + 1}: {info[0]}")
+        if (len(x) - len(x.lstrip())) % 4 != 0:
+            print(f"{z}: Line {i + 1}: {info[1]}")
+        if all([x.endswith(";"), "#" not in x]) or (x.split("#")[0].strip().endswith(";")):
+            print(f"{z}: Line {i + 1}: {info[2]}")
+        if "#" in x and not any(["  #" in x, x.startswith("#")]):
+            print(f"{z}: Line {i + 1}: {info[3]}")
+        if len(x.split("#")) != 1 and "TODO" in x.split("#")[1].upper():
+            print(f"{z}: Line {i + 1}: {info[4]}")
+        if x == "":
+            empty += 1
+        else:
+            if empty > 2:
+                print(f"{z}: Line {i + 1}: {info[5]}")
+            empty = 0
+        if x.lstrip().startswith("def") or x.lstrip().startswith("class"):
+            if not re.search("^(def|class) [A-Za-z_0-9]+", x.lstrip()):
+                print(f"{z}: Line {i + 1}: {info[6]}")
+            if x.lstrip().startswith("class") and not re.search("^class[ ]+[A-Z][A-Za-z0-9]+[ ]*[(]*", x.lstrip()):
+                print(f"{z}: Line {i + 1}: {info[7]}")
+            if x.lstrip().startswith("def") and not re.search("^def[ ]+[a-z0-9_]+[ ]*[(]*", x.lstrip()):
+                print(f"{z}: Line {i + 1}: {info[8]}")
+        if x.lstrip().startswith("def"):
+            equal = re.findall("[(](.*)[)]", x.lstrip())[0].split(", ")
+            for y in equal:
+                if len(equal) != 1 and not re.search("^[a-z_]+", y):
+                    print(f"{z}: Line {i + 1}: {info[9]}")
+                if "=" in y and y.split("=")[1] in ("[]", "{}", "()"):
+                    print(f"{z}: Line {i + 1}: {info[11]}")
+        elif "=" in x:
+            if re.findall("[A-Z]", x.split("=")[0]):
+                print(f"{z}: Line {i + 1}: {info[10]}")
