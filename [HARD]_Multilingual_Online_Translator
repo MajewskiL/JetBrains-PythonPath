@@ -1,0 +1,49 @@
+# https://hyperskill.org/projects/99
+
+import requests
+from bs4 import BeautifulSoup
+import sys
+
+lang = {"1" : "Arabic", "2" : "German", "3" : "English", "4" : "Spanish", "5" : "French", "6" : "Hebrew",
+        "7" : "Japanese", "8" : "Dutch", "9" : "Polish", "10" : "Portuguese", "11" : "Romanian",
+        "12" : "Russian", "13" : "Turkish"}
+word = sys.argv[3]
+try:
+    lg_t = "0" if sys.argv[2] == "all" else list(lang.keys())[list(lang.values()).index(sys.argv[2].capitalize())][0]
+except ValueError:
+    print(f"Sorry, the program doesn't support {sys.argv[2]}")
+    exit()
+try:
+    lg_s = list(lang.keys())[list(lang.values()).index(sys.argv[1].capitalize())][0]
+except ValueError:
+    print(f"Sorry, the program doesn't support {sys.argv[1]}")
+    exit()
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+nr_1 = 1 if lg_t == "0" else int(lg_t)
+nr_2 = 14 if lg_t == "0" else int(lg_t) + 1
+ln = 1 if lg_t == "0" else 5
+with open(f'{word}.txt', 'w', encoding='utf-8') as file:
+    for a in range(nr_1, nr_2):
+        if int(lg_s) != a:
+            response = requests.get(f"https://context.reverso.net/translation/{lang[lg_s].lower()}-{lang[str(a)].lower()}/{word}", headers=headers)
+            if response.status_code == 404:
+                print(f"Sorry, unable to find {word}")
+                break
+            elif response.status_code != 200:
+                print("Something wrong with your internet connection")
+                break
+            soup = BeautifulSoup(response.content, features="html.parser")
+            trans = ([x.text.strip() for x in soup.select("#translations-content > .translation")])
+            ex = [x.text.strip() for x in soup.select("#examples-content > .example >  .ltr")]
+            print(f"{lang[str(a)]} Translations:")
+            file.write(f"\n{lang[str(a)]} Translations:\n")
+            print(*trans[0:ln], sep="\n")
+            for i in range(ln):
+                    file.write(trans[i] + "\n")
+            print(f"\n{lang[str(a)]} Examples:")
+            file.write(f"\n{lang[str(a)]} Examples:\n")
+            for x in range(0,ln,2):
+                print(ex[x])
+                file.write(ex[x])
+                print(f"{ex[x+1]}\n")
+                file.write(f"{ex[x+1]}\n")
