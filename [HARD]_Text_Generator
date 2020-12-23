@@ -1,0 +1,44 @@
+#  https://hyperskill.org/projects/134
+
+import random
+
+
+def tokens_to_dict(list_tokens):
+    list_bigrams = list(zip([" ".join(list_tokens[x:x+1]) for x in range(len(list_tokens) - 1)],
+                            [list_tokens[x] for x in range(1, len(list_tokens))]))
+    bigram_dict = {}
+    for bigram in list_bigrams:
+        try:
+            x = bigram_dict[bigram[0]]
+        except KeyError:
+            bigram_dict[bigram[0]] = {}
+        try:
+            bigram_dict[bigram[0]][bigram[1]] += 1
+        except KeyError:
+            bigram_dict[bigram[0]][bigram[1]] = 1
+    return bigram_dict
+
+
+def print_sentences_stage_5(b_dict):
+    first_token = [keys for keys in b_dict]
+    starts = list(filter(lambda x: x[0].isupper() and x[-1].isalpha(), first_token))
+    sentence = []
+    while True:
+        while sentence == [] or sentence[0].split()[0][-1] in ".!?":
+            sentence = [random.choice([keys for keys in starts])]
+        tokens_list = [keys for keys in b_dict[sentence[-1]]]
+        weights = [b_dict[sentence[-1]][key] for key in tokens_list]
+        word = random.choices(tokens_list, weights)[0]
+        sentence.append(word)
+        if any([len(sentence) > 10, all([len(sentence) < 5, sentence[-1][-1] in ".!?"])]):
+            sentence = []
+        if len(sentence) > 4 and sentence[-1][-1] in ".?!":
+            return " ".join(sentence)
+
+
+file_name = input()
+with open(file_name, "r", encoding='utf-8') as file:
+    tokens = file.read().split()
+
+for _ in range(10):
+    print(print_sentences_stage_5(tokens_to_dict(tokens)))
