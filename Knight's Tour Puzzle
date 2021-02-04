@@ -1,0 +1,144 @@
+#  http://hyperskill.org/projects/141
+
+import copy
+
+
+class Board:
+    def __init__(self, dim):
+        self.x = dim[0] - 1
+        self.y = dim[1] - 1
+        self.len_x = len(str((dim[0]) * (dim[1])))
+        self.len_y = len(str(dim[1]))
+        self.board = [["_"] * (dim[0]) for _ in range(dim[1])]
+
+    def print_board(self):
+        print(f"{' ' * self.len_y}{'-' * (3 + (self.len_x + 1) * (self.x + 1))}")
+        for i in range(self.y, -1, -1):
+            print(f"{' ' * (self.len_y - len(str(i + 1))) + str(i + 1)}|"
+                  f" {' '.join([self.board[i][j] * self.len_x if self.board[i][j] == '_' else ' ' * (self.len_x - 1) + self.board[i][j] for j in range(self.x + 1)])} |")
+        print(f"{' ' * self.len_y}{'-' * (3 + (self.len_x + 1) * (self.x + 1))}")
+        print(f"{' ' * (self.len_y + 1)}{''.join([' ' * (self.len_x - len(str(i + 1)) + 1) + str(i + 1) for i in range(self.x +1)])}")
+
+    def move_knight(self, pos, char):
+        self.board[pos[1]][pos[0]] = char
+
+
+class Knight:
+    def __init__(self, dim):
+        self.y = dim[1] - 1
+        self.x = dim[0] - 1
+
+    def check_move(self, brd):
+        vectors = [(-2, -1), (-2, 1), (2, -1), (2, 1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
+        how_many_moves = 0
+        temp_board = Board([brd.x + 1, brd.y + 1])
+        temp_board.board = copy.deepcopy(brd.board)
+        for vector in vectors:
+            x = self.x + vector[0]
+            y = self.y + vector[1]
+            if all([x >= 0, y >= 0, x <= brd.x, y <= brd.y]) and temp_board.board[y][x] not in "*X":
+                how_many_moves += 1
+                temp_board.move_knight([x, y], return_moves(x, y, brd))
+        if how_many_moves == 0:
+            field = "".join(["".join(i) for i in brd.board]).count('*') + 1
+            if field != (brd.x + 1) * (brd.y + 1):
+                print("No more possible moves!")
+                print(f"Your knight visited {field} squares!")
+            else:
+                print("What a great toured! Congratulations!")
+            exit()
+        temp_board.print_board()
+
+
+def return_moves(x, y, brd):
+    vectors = ((-2, -1), (-2, 1), (2, -1), (2, 1), (1, 2), (1, -2), (-1, 2), (-1, -2))
+    count = 0
+    for vector in vectors:
+        x_t = x + vector[0]
+        y_t = y + vector[1]
+        if all([x_t >= 0, y_t >= 0, x_t <= brd.x, y_t <= brd.y]) and brd.board[y_t][x_t] not in "X*":
+            count += 1
+    return str(count)
+
+
+def check_input(string, b=False):
+    try:
+        x_i, y_i = list(map(int, string.split(" ")))
+    except ValueError:
+        return False
+    if b:
+        if any([x_i < 0, x_i - 1 > b.x, y_i < 0, y_i - 1 > b.y]) or b.board[y_i - 1][x_i - 1] in ("X", "*"):
+            return False
+    else:
+        if any([x_i < 1, y_i < 1]):
+            return False
+    return [x_i, y_i]
+
+
+def auto_moves(x, y, brd, nr="2"):
+    vectors = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
+    if "".join(["".join(i) for i in brd.board]).count('_') == 0:
+        return True
+    else:
+        order = []
+        for index, vector in enumerate(vectors):
+            order.append([return_moves(x + vector[0], y + vector[1], brd), index])
+        order = sorted(order, key=lambda l: l, reverse=False)
+        vectors = [vectors[i[1]] for i in order]
+        for vector in vectors:
+            x_t = x + vector[0]
+            y_t = y + vector[1]
+            if all([x_t >= 0, y_t >= 0, x_t <= brd.x, y_t <= brd.y]) and not brd.board[y_t][x_t].isdigit():
+                brd.board[y_t][x_t] = nr
+                res = auto_moves(x_t, y_t, brd, str(int(nr) + 1))
+                if res:
+                    return brd
+                else:
+                    brd.board[y_t][x_t] = "_"
+
+
+while True:
+    ans = check_input(input("Enter your board dimensions: "))
+    if ans:
+        break
+    else:
+        print("Invalid")
+board = Board(ans)
+tmp_board = Board(ans)
+while True:
+    ans = check_input(input("Enter the knight's starting position: "), board)
+    if ans:
+        break
+    else:
+        print("Invalid")
+knight = Knight(ans)
+tmp_board.move_knight([knight.x, knight.y], "1")
+while True:
+    ans2 = input("Do you want to try the puzzle? (y/n): ")
+    if ans2 in "yn" and ans2 != "":
+        show = auto_moves(knight.x, knight.y, tmp_board)
+        if show is None:
+            print("No solution Exists!")
+            exit()
+        else:
+            yes = True
+    if ans2 == "y":
+        board.move_knight([knight.x, knight.y], "X")
+        knight.check_move(board)
+        while True:
+            ans = check_input(input("Enter your next move: "), board)
+            if ans and sorted((abs(ans[0] - 1 - knight.x), abs(ans[1] - 1 - knight.y))) == [1, 2]:
+                board.move_knight([knight.x, knight.y], "*")
+                knight.x, knight.y = ans[0] - 1, ans[1] - 1
+                board.move_knight([knight.x, knight.y], "X")
+                knight.check_move(board)
+            else:
+                pass
+                print("Invalid move!", end="")
+    elif ans2 == "n":
+        if yes:
+            print("Here's the solution!")
+            show.print_board()
+        exit()
+    else:
+        print("Invalid")
