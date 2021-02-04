@@ -1,0 +1,87 @@
+#  https://hyperskill.org/projects/139
+
+from playsound import playsound
+
+
+class Machine:
+
+    def __init__(self, water, milk, beans, cups, money):
+        self.water = water
+        self.milk = milk
+        self.beans = beans
+        self.cups = cups
+        self.money = money
+
+    def check_ingredients(self, water, milk, beans):
+        water = self.water - water
+        milk = self.milk - milk
+        beans = self.beans - beans
+        if all([water >= 0, milk >= 0, beans >= 0, self.cups > 0]):
+            print("I have enough resources, making you a coffee!")
+            playsound('true.mp3')
+            return True
+        else:
+            playsound('false.mp3')
+            if water < 0:
+                print("Sorry, not enough water!")
+            elif milk < 0:
+                print("Sorry, not enough milk!")
+            elif beans < 0:
+                print("Sorry, not enough coffee beans!")
+            else:
+                print("Sorry, not enough cups!")
+            return False
+
+    def fill_machine(self):
+        self.water += int(input("Write how many ml of water do you want to add:"))
+        self.milk += int(input("Write how many ml of milk do you want to add:"))
+        self.beans += int(input("Write how many grams of coffee beans do you want to add:"))
+        self.cups += int(input("Write how many disposable cups of coffee do you want to add:"))
+
+    def print_state(self):
+        print("\nThe coffee machine has:")
+        print(f"{self.water} of water")
+        print(f"{self.milk} of milk")
+        print(f"{self.beans} of coffee beans")
+        print(f"{self.cups} of disposable cups")
+        print(f"{self.money} of money")
+
+    def make_coffee(self, water, milk, beans, money):
+        if self.check_ingredients(water, milk, beans):
+            self.water -= water
+            self.milk -= milk
+            self.beans -= beans
+            self.cups -= 1
+            self.money += money
+
+
+def menu(machine):
+    while True:
+        action = input("\nWrite action (buy, fill, take, remaining, exit):")
+        if action == "take":
+            print(f"I gave you ${machine.money}")
+            machine.money = 0
+        elif action == "fill":
+            machine.fill_machine()
+        elif action == "buy":
+            choice = input("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu:")
+            if choice == "1":
+                machine.make_coffee(250, 0, 16, 4)
+            elif choice == "2":
+                machine.make_coffee(350, 75, 20, 7)
+            elif choice == "3":
+                machine.make_coffee(200, 100, 12, 6)
+            elif choice == "back":
+                pass
+        elif action == "remaining":
+            m.print_state()
+        elif action == "exit":
+            return
+
+
+
+m = Machine(400, 400, 400, 400, 400)
+#m = Machine(400, 540, 120, 9, 550)
+menu(m)
+
+
