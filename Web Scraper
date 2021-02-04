@@ -1,0 +1,34 @@
+#  https://hyperskill.org/projects/145
+
+import requests
+from bs4 import BeautifulSoup
+import re
+import os
+
+site = "https://www.nature.com"
+nr = 1
+n = int(input())
+a_type = input()
+path = f"Page_{nr}"
+while True:
+    os.mkdir(path)
+    response = requests.get(f"https://www.nature.com/nature/articles?searchType=journalSearch&sort=PubDate&page={nr}")
+    soup = BeautifulSoup(response.content, features="html.parser")
+    articles = soup.find_all('article')
+    for article in articles:
+        title = article.find('a', attrs={'class': 'text-gray'}).text.strip()
+        punctuation = r"―!\"#$%&'()*+,-./:;<=>?@[\]_^`{|}~"
+        title = "".join(["_" if t == " " else t if t not in punctuation else "" for t in title])
+        link = article.find('a', attrs={'class': 'text-gray'}).get('href')
+        news = article.find('span', attrs={'data-test': 'article.type'}).text
+        if news == a_type:
+            response2 = requests.get(f"{site}{link}")
+            soup2 = BeautifulSoup(response2.content, features="html.parser")
+            regex = re.compile('.*body.*')
+            body = soup2.find('div', attrs={'class': regex})
+            #with open(f"{path}\{title}.txt", "wb") as file:
+            #    file.write(str.encode(body.text).strip())
+    nr += 1#
+    if nr > n:
+        exit()
+    path = f"Page_{nr}"
