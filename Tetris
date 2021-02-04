@@ -1,0 +1,124 @@
+#  http://hyperskill.org/projects/147
+
+import copy
+
+pieces = {"O": [[4, 14, 15, 5]],
+          "I": [[4, 14, 24, 34], [3, 4, 5, 6]],
+          "S": [[5, 4, 14, 13], [4, 14, 15, 25]],
+          "Z": [[4, 5, 15, 16], [5, 15, 14, 24]],
+          "L": [[4, 14, 24, 25], [5, 15, 14, 13], [4, 5, 15, 25], [6, 5, 4, 14]],
+          "J": [[5, 15, 25, 24], [15, 5, 4, 3], [5, 4, 14, 24], [4, 14, 15, 16]],
+          "T": [[4, 14, 24, 15], [4, 13, 14, 15], [5, 15, 25, 14], [4, 5, 6, 15]],
+          "B": [[]]}
+
+
+class Piece:
+    def __init__(self, pcs, st=0):
+        self.piece = pcs
+        self.coord = copy.deepcopy(pieces[pcs][0])
+        self.state = st
+
+    def down(self):
+        temp = copy.deepcopy(self.coord)
+        for i in range(4):
+            self.coord[i] = self.coord[i] + 10
+        if self.check_floor():
+            self.coord = copy.deepcopy(temp)
+            for s in self.coord:
+                field[s // x][s % x] = "0"
+
+    def check_edges(self, line, i):
+        if self.coord[i] < line:
+            return True
+        elif self.coord[i] >= line + x:
+            return True
+
+    def check_floor(self):
+        if any([i >= x * y for i in self.coord]):
+            return True
+        for i in self.coord:
+            field_x = i // x
+            field_y = i % x
+            if field[field_x][field_y] == "0":
+                return True
+
+    def move(self, where):
+        temp = copy.deepcopy(self.coord)
+        for i in range(4):
+            line = ((self.coord[i] // x) * x)
+            self.coord[i] = self.coord[i] + where
+            if self.check_edges(line, i):
+                self.coord = copy.deepcopy(temp)
+                break
+        self.down()
+
+    def rotate(self):
+        next_state = (self.state + 1) % len(pieces[self.piece])
+        vector = [j - i for i, j in zip(pieces[self.piece][self.state], pieces[self.piece][next_state])]
+        for i in range(4):
+            self.coord[i] = (self.coord[i] + vector[i])
+        self.state = (self.state + 1) % len(pieces[self.piece])
+        self.down()
+
+
+def fill_field(pc):
+    print(pc)
+    for s in pc:
+        field[s // x][s % x] = "0"
+
+
+def print_piece(pc):
+    temp = copy.deepcopy(field)
+    if pc:
+        for s in pc.coord:
+            temp[s // x][s % x] = "0"
+    for line in temp:
+        print(" ".join(line))
+    print()
+
+
+def check_horizontal():
+    global field
+    for f in range(y):
+        if "".join(field[f]).count("0") == x:
+            temp = [["-"] * int(x)] + field[:f] + field[f + 1:]
+            field = copy.deepcopy(temp)
+    return
+
+
+def check_vertical():
+    for f in range(x):
+        if any(["".join(field[i][f] for i in range(y)).count("0") == y]):
+            return True
+    return False
+
+
+state = 0
+x, y = map(int, input().split())
+field = [["-"] * int(x) for _ in range(int(y))]
+print_piece(False)
+
+while True:
+    if check_vertical():
+        exit()
+    what = input()
+    if what == "exit":
+        exit()
+    else:
+        if what == "piece":
+            piece = Piece(input())
+        if what == "left":
+            piece.move(-1)
+        elif what == "right":
+            piece.move(1)
+        elif what == "down":
+            piece.down()
+        elif what == "rotate":
+            piece.rotate()
+        elif what == "break":
+            check_horizontal()
+            piece = Piece("B")
+        print_piece(piece)
+
+
+
