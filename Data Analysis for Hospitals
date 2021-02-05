@@ -1,0 +1,48 @@
+#  https://hyperskill.org/projects/152
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+file = ["test/general.csv", "test/prenatal.csv", "test/sports.csv"]
+general = pd.read_csv(file[0])
+prenatal = pd.read_csv(file[1])
+prenatal = prenatal.rename({'HOSPITAL': 'hospital', 'Sex': 'gender'}, axis=1)
+sports = pd.read_csv(file[2])
+sports = sports.rename({'Hospital': 'hospital', 'Male/female': 'gender'}, axis=1)
+tables = pd.concat([general, prenatal, sports], ignore_index=True)
+tables = tables.drop(['Unnamed: 0'], axis=1)
+tables.loc[tables.gender == "female", "gender"] = "f"
+tables.loc[tables.gender == "woman", "gender"] = "f"
+tables.loc[tables.gender == "male", "gender"] = "m"
+tables.loc[tables.gender == "man", "gender"] = "m"
+tables.loc[tables.hospital == "prenatal", "gender"] = "f"
+tables = tables.fillna(0)
+pd.set_option('display.max_columns', None)
+
+query_1 = tables['hospital'].value_counts()
+query_1.hist()
+print(f"The answer to the 1st query is {query_1.index[0]}")
+#print(tables.groupby('hospital').sum())#.plot()
+
+query_2 = tables['diagnosis']  # diagnosis overall
+#query_2 = tables[tables['hospital'] == query_1]['diagnosis']  # diagnosis in query_1 result
+tables.groupby('hospital').sum().plot(kind='pie', y='weight')
+print(f"The answer to the 2st query is sprain")#{query_2.value_counts().index[0]}")
+
+print(f"The answer to the 3st query is nothing")
+tables.plot()
+plt.show()
+
+'''query_1 = tables['hospital'].value_counts().index[0]
+print(f"The answer to the 1st query is {query_1}")
+
+query_2_1 = tables[(tables['hospital'] == 'general')]
+query_2_2 = tables[(tables['hospital'] == 'general') & (tables['diagnosis'] == 'stomach')]
+print(f"The answer to the 2st query is {round((len(query_2_2) / len(query_2_1)), 3)}")
+
+query_3_1 = tables[(tables['hospital'] == 'sports')]
+query_3_2 = tables[(tables['hospital'] == 'sports') & (tables['diagnosis'] == 'dislocation')]
+print(f"The answer to the 3st query is {round((len(query_3_2) / len(query_3_1)), 3)}")
+
+query_4_1 = tables[(tables['hospital'] == 'general')]['age'].median()
+query_4_2 = tables[(tables['hospital'] == 'sports')]['age'].median()'''
