@@ -1,0 +1,21 @@
+#  https://hyperskill.org/projects/157?track=2
+
+import requests
+import json
+
+cache = {}
+
+from_code = input()
+to_code = input()
+amount = float(input())
+print("Checking the cache…")
+rates = requests.get(f"http://www.floatrates.com/daily/{from_code}.json")
+cache.update(json.loads(rates.text))
+
+try:
+    rate1 = cache[to_code]
+    print("Oh! It is in the cache!")
+except KeyError:
+    cache[to_code] = rates[to_code]
+    print("Sorry, but it is not in the cache!")
+print(f"You received {round(cache[to_code]['rate'] * amount, 2)} EUR.")
