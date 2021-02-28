@@ -1,0 +1,293 @@
+#  https://hyperskill.org/projects/161
+
+import regex as re
+import json
+import os
+
+class World:
+    def __init__(self, story, choices, outcomes):
+        self.story = [x.strip() for x in story]
+        self.choices = [x.strip() for x in choices]
+        self.outcomes = [x.strip() for x in outcomes]
+        self.curr_story = ""
+        self.curr_choices = []
+        self.curr_outcomes = []
+
+
+class Warrior:
+    def __init__(self, name):
+        self.user_name = name
+        self.name = ""
+        self.species = ""
+        self.gender = ""
+        self.snack = []
+        self.weapon = []
+        self.tool = []
+        self.diff = ""
+        self.life = 0
+        self.inventory = []
+        self.character = []
+        self.n_story = 0
+        self.n_choices = 0
+        self.n_outcomes = 0
+        self.level = 1
+        self.num = 0
+
+    def inc_life(self):
+        self.life += 1
+        print(f"You gained an extra life! Lives remaining: {self.life}")
+        pass
+
+    def dec_life(self):
+        self.life -= 1
+        pass
+
+    def add_inv(self, item):
+        self.inventory.append(item)
+        print(f"A new item has been added to your inventory: {item}")
+
+    def rmv_inv(self, item):
+        self.inventory.remove(item)
+        print(f"An item has been removed from your inventory: {item}")
+
+    def put_warrior(self):
+        with open(rf"saves/{self.user_name}.json", "w") as f:
+            jsonstr = json.dumps(self.__dict__)
+            f.write(jsonstr)
+
+    def put_warrior_txt(self):
+        with open(rf"saves/{self.user_name}.txt", "w") as f:
+            f.writelines([', '.join(self.character) + "\n", ', '.join(self.inventory) + "\n", str(self.diff) + " " + str(self.life) + "\n", str(self.level) + "\n"])
+
+    def get_warrior(self):
+        with open(rf"saves/{self.user_name}.json", "r") as f:
+            jsonstr = json.load(f)
+        self.snack = jsonstr["snack"]
+        self.weapon = jsonstr["weapon"]
+        self.tool = jsonstr["tool"]
+        self.inventory = jsonstr["inventory"]
+        self.character = jsonstr["character"]
+        self.n_story = jsonstr["n_story"]
+        self.n_choices = jsonstr["n_choices"]
+        self.n_outcomes = jsonstr["n_outcomes"]
+        self.level = jsonstr["level"]
+
+def start():
+    difficulty = {"1": "easy", "2": "medium", "3": "hard"}
+    print("Starting a new game...")
+    user_name = input("Enter a user name to save your progress or type '/b' to go back ")
+    if user_name == r"/b":
+        return False
+    user = Warrior(user_name)
+    print("Create your character:")
+    user.name = input("1- Name")
+    user.species = input("2- Species ")
+    user.gender = input("3- Gender ")
+    user.character = [user.name, user.species, user.gender]
+    print("Pack your bag for the journey:")
+    user.snack.append(input("1- Favourite Snack "))
+    user.weapon.append(input("2- A weapon for the journey "))
+    user.tool.append(input("3- A traversal tool "))
+    user.inventory = user.snack + user.tool + user.weapon
+    print("Choose your difficulty:")
+    print("1- Easy")
+    print("2- Medium")
+    print("3- Hard")
+    ans = input().lower()
+    user.diff = difficulty[ans] if ans in ("1", "2", "3") else ans
+    user.life = 5 if user.diff == "easy" else 3 if user.diff == "medium" else 1
+    print("Good luck on your journey!")
+    print(f"Your character: {', '.join(user.character)}")
+    print(f"Your inventory: {', '.join(user.inventory)}")
+    print(f"Difficulty: {user.diff}")
+    user.put_warrior()
+    #user.put_warrior()
+    return user
+
+
+def game(user):
+    with open("story/story.txt", "r") as f:
+        story = f.read().split("+")
+    with open("story/choices.txt", "r") as f:
+        choices = f.read().split("\n")
+    with open("story/outcomes.txt", "r") as f:
+        outcomes = f.read().split("*")
+    world = World(story, choices, outcomes)
+    while True:
+        print(f"Level {user.level}")
+        if world.story[user.n_story].startswith("Level"):
+            #print(f"Level {user.level}") #world.story[user.n_story])
+            user.n_story += 1
+            if world.story[user.n_story - 1] in ("Level 2", "Level 3"):
+                print("You've found a safe spot to rest. Saving your progress...")
+                #user.level += 1
+                #user.n_choices += 3
+                #user.n_outcomes += user.num
+                #user.put_warrior()
+                #user.put_warrior_txt()
+        world.curr_story = world.story[user.n_story]
+        user.num = 0
+        world.curr_choices = []
+        for x in range(3):
+            world.curr_choices.append(world.choices[user.n_choices + x])
+        i, p = 0, 0
+        tmp, world.curr_outcomes = [], []
+        while len(world.curr_outcomes) != 3:
+            tmp.append(world.outcomes[user.n_outcomes + i])
+            user.num += 1
+            p += 1
+            i += 1
+            if all(["option" in world.outcomes[user.n_outcomes + i - 1], "option" in world.outcomes[user.n_outcomes + i]]):
+                p -= 1
+            else:
+                world.curr_outcomes.append(tmp)
+                tmp = []
+        print(world.curr_story)
+        print()
+        print("What will you do? Type the number of the option or type '/h' to show help.")
+        print()
+        for x in range(3):
+            print(f"{x + 1}- {world.curr_choices[x]}")
+        asking = True
+        while asking:
+            ans = input()
+            todo = ["", "", ""]
+            if ans == "/h":
+                print("Type the number of the option you want to choose.")
+                print("Commands you can use:")
+                print("/i => Shows inventory.")
+                print("/q => Exits the game.")
+                print("/c => Shows the character traits.")
+                print("/h => Shows help.")
+            elif ans == "/i":
+                print(f"Inventory: {', '.join(user.inventory)}")
+            elif ans == "/c":
+                print(f"Your character: {', '.join(user.character)}")
+                print(f"Lives remaining: {user.life}")
+            elif ans == "/q":
+                return False
+            elif ans in ("1", "2", "3"):
+                try:
+                    action = re.findall(r"[(].*[)]$", world.curr_outcomes[int(ans) - 1][0])
+                    for act in action[0].strip("(").strip(")").split(" "):
+                        if "life" in act:
+                            if "+" in act:
+                                user.inc_life()
+                            else:
+                                user.dec_life()
+                                if user.life <= 0:
+                                    print(world.curr_outcomes[int(ans) - 1][0].replace(action[0], ""))
+                                    print(f"You died! Lives remaining: {user.life}")
+                                    print("You've run out of lives! Game over!\n")
+                                    return True
+                                print(f"You died! Lives remaining: {user.life}")
+                                user.get_warrior()
+                                asking = False
+                        elif "inventory" in act:
+                            if "+" in act:
+                                user.add_inv(re.findall(r"'(.*)'$", act)[0])
+                            if "-" in act:
+                                user.rmv_inv(re.findall(r"'(.*)'$", act)[0])
+                        elif "move" in act:
+                            user.n_story += 1
+                            user.n_outcomes += user.num
+                            user.n_choices += 3
+                            asking = False
+                        elif "repeat" in act:
+                            pass
+                        elif "save" in act:
+                            user.level += 1
+                            user.put_warrior_txt()
+                            user.put_warrior()
+                        elif "game_won" in act:
+                            return False
+                    print(world.curr_outcomes[int(ans) - 1][0].replace(action[0], ""))
+                except ValueError:
+                    action = re.findall(r"[(].*[)]$", world.curr_outcomes[int(ans) - 1][1])
+                    for act in action[0].strip("(").strip(")").split(" "):
+                        if "life" in act:
+                            if "+" in act:
+                                user.inc_life()
+                            else:
+                                user.dec_life()
+                                if user.life == 0:
+                                    print(world.curr_outcomes[int(ans) - 1][1].replace(action[0], ""))
+                                    print(f"You died! Lives remaining: {user.life}")
+                                    print("You've run out of lives! Game over!\n")
+                                    return True
+                                print(f"You died! Lives remaining: {user.life}")
+                                user.get_warrior()
+                                user.n_story -= 1
+                                asking = False
+                        elif "inventory" in act:
+                            if "+" in act:
+                                user.add_inv(re.findall(r"'(.*)'$", act)[0])
+                            if "-" in act:
+                                user.rmv_inv(re.findall(r"'(.*)'$", act)[0])
+                        elif "move" in act:
+                            user.n_story += 1
+                            user.n_outcomes += 3
+                            user.n_choices += user.num
+                            asking = False
+                        elif "repeat" in act:
+                            pass
+                        elif "save" in act:
+                            user.level += 1
+                            user.put_warrior_txt()
+                            user.put_warrior()
+                        elif "game_won" in act:
+                            return False
+                    print(world.curr_outcomes[int(ans) - 1][1].replace(action[0], ""))
+            else:
+                print("Unknown input! Please enter a valid one.\n")
+
+
+def load():
+    print()
+    entries = os.listdir('saves/')
+    if len(entries) == 0:
+        print("No save data found!")
+        return
+    print("Choose your username from the list:")
+    for ent in entries:
+        if ent.endswith(".txt"):
+            print(ent.strip(".txt"))
+    file = input()
+    if file + ".txt" not in "".join(entries):
+        print("No save data found!")
+        return
+    print("Loading your progress...")
+    user = Warrior(file)
+    if not game(user):
+        return False
+    return True
+
+
+def menu():
+    while True:
+        print("***Welcome to the Journey to Mount Qaf*** \n")
+        print("1- Press key '1' or type 'start' to start a new game")
+        print("2- Press key '2' or type 'load' to load your progress")
+        print("3- Press key '3' or type 'quit' to quit the game\n")
+        ans = input().lower()
+        if ans in ('1', 'start'):
+            player = start()
+            if not player:
+                pass
+            else:
+                if not game(player):
+                    return False
+        elif ans in ('2', 'load'):
+            load()
+        elif ans in ('3', 'quit'):
+            return False
+        else:
+            print("Unknown input! Please enter a valid one.")
+
+
+while True:
+    if not menu():
+        break
+
+print("Goodbye!")
+
