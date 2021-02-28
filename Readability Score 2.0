@@ -1,0 +1,115 @@
+#  https://hyperskill.org/projects/155
+
+import regex as re
+import argparse
+import math
+
+
+syllables, polysyllables, d_words = 0, 0, []
+age = {1: "67", 2: "7", 3: "9", 4: "10", 5: "11", 6: "12", 7: "13", 8: "14",
+       9: "15", 10: "16", 11: "17", 12: "18", 13: "24", 14: "25"}
+
+
+def vowels(x):
+    if x[-1] == ",":
+        print(x)
+    n_v = len(re.findall(r'[AEIOUYaeiouy]', x))
+    n_dv = re.findall(r'[AEIOUYaeiouy]{2}', x)
+    n_dv2 = re.findall(r'[AEIOUYaeiouy]{3}', x)
+    if x[-1] in 'eE':
+        n_v -= 1
+    vowel = n_v - len(n_dv) - len(n_dv2)
+    return vowel or 1
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--infile')
+parser.add_argument('--words')
+args = parser.parse_args()
+
+with open(args.infile, "r") as file:
+    string = file.read().lower()
+
+with open(args.words, "r") as file:
+    all_d_words = file.read().lower().split(" ")
+
+print("The text is:")
+print(string, "\n")
+
+string = string.strip()
+s = 0
+if string[-1] not in ".?!":
+    string += "."
+    s = 1
+
+words = re.findall(r'(\b[a-zA-Z0-9\-,]+\b)', string)
+l_words = len(words)
+sentences = re.findall(r'([\w]*[\.!?])', string)
+l_sentences = len(sentences)
+characters = re.findall(r'([\S])', string)
+l_characters = len(characters) - s
+for word in words:
+    n_vowels = vowels(word)
+    print(f"Word: {word} has {n_vowels} syllables {'IS POLYSYLLABLES' if n_vowels >2 else''}")
+    syllables += n_vowels
+    if n_vowels > 2:
+        polysyllables += 1
+    if word.lower() not in all_d_words:
+        d_words.append(word.lower())
+
+d_words = len(d_words)
+
+print(f"Words: {l_words}")
+print(f"Difficult words: {d_words}")
+print(f"Sentences: {l_sentences}")
+print(f"Characters: {l_characters}")
+print(f'Syllables: {syllables}')
+print(f'Polysyllables: {polysyllables}')
+menu = input(f'Enter the score you want to calculate (ARI, FK, SMOG, CL, all): ')
+print()
+avr_score, s = 0, 0
+
+if menu in ("all", "ARI"):
+    age3 = {0: "5", 1: "6", 2: "7", 3: "8", 4: "9", 5: "10", 6: "11", 7: "12", 8: "13",
+           9: "14", 10: "15", 11: "16", 12: "17", 13: "18"}
+    score = 4.71 * (l_characters / l_words) + 0.5 * (l_words / l_sentences) - 21.43
+    avr_score += int(age3[math.ceil(score)])
+    s += 1
+    print(f"Automated Readability Index: {round(score, 2)} (about {age3[math.ceil(score)]}-year olds)")
+if menu in ("all", "FK"):
+    score = 0.39 * (l_words / l_sentences) + 11.8 * (syllables / l_words) - 15.59
+    avr_score += int(age[math.ceil(score) if math.ceil(score) < 15 else 14])
+    s += 1
+    print(f"Flesch–Kincaid readability tests: {round(score, 2)} (about {age[math.ceil(score) if math.ceil(score) < 15 else 14]}-year olds)")
+if menu in ("all", "SMOG"):
+    score = 1.043 * math.sqrt(polysyllables * 30 / l_sentences) + 3.1291
+    avr_score += int(age[math.ceil(score) if math.ceil(score) < 15 else 14])
+    s += 1
+    print(f"Simple Measure of Gobbledygook: {round(score, 2)} (about {age[math.ceil(score) if math.ceil(score) < 15 else 14]}-year olds)")
+if menu in ("all", "CL"):
+    score = 0.0588 * (l_characters * 100 / l_words) - 0.296 * (l_sentences * 100 / l_words) - 15.8
+    avr_score += int(age[math.ceil(score) if math.ceil(score) < 15 else 14])
+    s += 1
+    print(f"Coleman–Liau index: {round(score, 2)} (about {age[math.ceil(score) if math.ceil(score) < 15 else 14]}-year olds)")
+if menu in ("all", "PB"):
+    score = 0.1579 * (d_words * 100 / l_words) + 0.0496 * (l_words / l_sentences)
+    if d_words * 100 / l_words >= 5:
+        score += 3.6365
+    s += 1
+    score2 = score
+    if score2 >= 9:
+        age2 = 24
+    elif score2 >= 8:
+        age2 = 18
+    elif score2 >= 7:
+        age2 = 16
+    elif score2 >= 6:
+        age2 = 14
+    elif score2 >= 5:
+        age2 = 12
+    else:
+        age2 = 10
+    avr_score += age2
+    print(f"Probability-based score: {round(score, 2)} (about {age2}-year olds)")
+
+print(f"\nThis text should be understood in average by {avr_score / s} year olds.")
