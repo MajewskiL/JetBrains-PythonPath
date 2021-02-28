@@ -1,0 +1,54 @@
+#  https://hyperskill.org/projects/163
+
+def student_list(s_list, l):
+    scores = {}
+    students_lst = []
+    for student in s_list:
+        try:
+            scores[student[l]].append(student)
+        except KeyError:
+            scores[student[l]] = [student]
+    for score in sorted(scores, reverse=True):
+        for scr in sorted(scores[score], key=lambda x: (x[0])):
+            students_lst.append(scr)
+    return students_lst
+
+
+x = int(input())
+with open("applicants.txt", "r") as f:
+    students = [student.split(" ") for student in f.read().split("\n")]
+
+students_tmp = [[" ".join(std[:2]), *std[2:6], *std[6:]] for std in students]
+classes = {"Biotech": [], "Chemistry": [], "Engineering": [], "Mathematics": [], "Physics": []}
+students = [[students_t[0],
+            max(((int(students_t[1]) + int(students_t[3])) / 2), float(students_t[5])),
+            max(int(students_t[2]), float(students_t[5])),
+            max(int(students_t[3]), float(students_t[5])),
+            max(((int(students_t[3]) + int(students_t[4])) / 2), float(students_t[5])),
+            max(((int(students_t[1]) + int(students_t[2])) / 2), float(students_t[5])),
+            *students_t[6:]] for students_t in students_tmp]
+
+for ls in range(6, 9):
+    nr, lesson, end = 0, 1, True
+    students = student_list(students, lesson)
+    while end:
+        if len(students) != 0 and any([lesson == 1 and students[nr][ls] == "Physics",
+                lesson == 2 and students[nr][ls] == "Chemistry",
+                lesson == 3 and students[nr][ls] == "Mathematics",
+                lesson == 4 and students[nr][ls] == "Engineering",
+                lesson == 5 and students[nr][ls] == "Biotech"]) and len(classes[students[nr][ls]]) < x:
+            classes[students[nr][ls]].append([students[nr][0], students[nr][lesson]])
+            students.pop(nr)
+        else:
+            nr += 1
+        if nr >= len(students):
+            nr = 0
+            lesson += 1
+        if lesson == 6:
+            end = False
+        else:
+            students = student_list(students, lesson)
+
+for name in ("Biotech", "Chemistry", "Engineering", "Mathematics", "Physics"):
+    with open(f"{name}.txt", "w") as f:
+        f.write("\n".join([student[0] + f" {student[1]:.1f}" for student in sorted(classes[name], key=lambda z: (-float(z[1]), z[0]))]))
